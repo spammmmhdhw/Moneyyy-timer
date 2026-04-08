@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Work-Timer</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #f4f7f6;
+            margin: 0;
+        }
+        .card {
+            background: white;
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.1);
+            text-align: center;
+            width: 320px;
+        }
+        /* Die normale Zeit-Anzeige */
+        #time-display {
+            font-size: 1.2rem;
+            color: #666;
+            margin-bottom: 5px;
+            font-family: monospace;
+        }
+        /* Die Geld-Anzeige */
+        #money-display {
+            font-size: 3.5rem;
+            font-weight: 800;
+            color: #2e7d32;
+            margin-bottom: 25px;
+            font-variant-numeric: tabular-nums;
+        }
+        .controls {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+        button {
+            border: none;
+            padding: 15px;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.1s, opacity 0.2s;
+        }
+        button:active { transform: scale(0.95); }
+        .start-btn { background: #4CAF50; color: white; grid-column: span 2; }
+        .stop-btn { background: #ff9800; color: white; }
+        .reset-btn { background: #f44336; color: white; }
+    </style>
+</head>
+<body>
+
+<div class="card">
+    <div id="time-display">00:00:00.00</div>
+    <div id="money-display">0,0000 €</div>
+    
+    <div class="controls">
+        <button class="start-btn" onclick="start()">Start / Weiter</button>
+        <button class="stop-btn" onclick="stop()">Pause</button>
+        <button class="reset-btn" onclick="reset()">Reset</button>
+    </div>
+</div>
+
+<script>
+    let startTime;
+    let elapsedTime = 0;
+    let timerInterval;
+    const hourlyRate = 24;
+    const msPerEuro = hourlyRate / 3600000;
+
+    function formatTime(ms) {
+        let hours = Math.floor(ms / 3600000);
+        let minutes = Math.floor((ms % 3600000) / 60000) ;
+        let seconds = Math.floor((ms % 60000) / 1000);
+        let centiseconds = Math.floor((ms % 1000) / 10);
+        
+        return [hours, minutes, seconds]
+            .map(v => v < 10 ? "0" + v : v)
+            .join(":") + "." + (centiseconds < 10 ? "0" + centiseconds : centiseconds);
+    }
+
+    function update() {
+        const now = Date.now();
+        const diff = now - startTime + elapsedTime;
+        
+        // Zeit-Update
+        document.getElementById('time-display').innerText = formatTime(diff);
+        
+        // Geld-Update
+        const earned = diff * msPerEuro;
+        document.getElementById('money-display').innerText = 
+            earned.toLocaleString('de-DE', { 
+                minimumFractionDigits: 4, 
+                maximumFractionDigits: 4 
+            }) + " €";
+    }
+
+    function start() {
+        if (!timerInterval) {
+            startTime = Date.now();
+            timerInterval = setInterval(update, 50); // 20 FPS für flüssige Optik
+        }
+    }
+
+    function stop() {
+        if (timerInterval) {
+            elapsedTime += Date.now() - startTime;
+            clearInterval(timerInterval);
+            timerInterval = null;
+        }
+    }
+
+    function reset() {
+        stop();
+        elapsedTime = 0;
+        document.getElementById('time-display').innerText = "00:00:00.00";
+        document.getElementById('money-display').innerText = "0,0000 €";
+    }
+</script>
+
+</body>
+</html>
